@@ -16,14 +16,9 @@ object ErlangTerm {
   val ErlangTrue = ErlangAtom("true")
   val ErlangFalse = ErlangAtom("false")
 
-  case class ErlangBinary(value: ByteString) extends ErlangTerm {
+  case class ErlangBinary(value: Array[Byte]) extends ErlangTerm {
     override private[erlactor] def toOtpErlangObject: OtpErlangObject = {
       new OtpErlangBinary(value.toArray)
-    }
-  }
-  object ErlangBinary {
-    def apply(value: Array[Byte]): ErlangBinary = {
-      ErlangBinary(ByteString(value))
     }
   }
 
@@ -58,9 +53,9 @@ object ErlangTerm {
     }
   }
 
-  case class ErlangRef(node: String, id: Int, creation: Int) extends ErlangTerm {
+  case class ErlangRef(node: String, ids: Array[Int], creation: Int) extends ErlangTerm {
     override private[erlactor] def toOtpErlangObject: OtpErlangObject = {
-      new OtpErlangRef(node, id, creation)
+      new OtpErlangRef(node, ids, creation)
     }
   }
 
@@ -92,8 +87,9 @@ object ErlangTerm {
       case o: OtpErlangUInt => ErlangInteger(BigInt(o.bigIntegerValue()))
       case o: OtpErlangLong => ErlangInteger(BigInt(o.bigIntegerValue()))
       case o: OtpErlangList => ErlangList(o.elements().map(fromOtpErlangObject).toList)
+      case o: OtpErlangString => ErlangList(o.stringValue())
       case o: OtpErlangPid => ErlangPid(o.node(), o.id(), o.serial(), o.creation())
-      case o: OtpErlangRef => ErlangRef(o.node(), o.id(), o.creation())
+      case o: OtpErlangRef => ErlangRef(o.node(), o.ids(), o.creation())
       case o: OtpErlangTuple =>
         o.elements().map(fromOtpErlangObject) match {
           case Array(v1) => ErlangTuple1(v1)
